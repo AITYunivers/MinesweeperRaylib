@@ -9,6 +9,7 @@ namespace MinesweeperRaylib
         public const int TILE_RES = 32;
         public const float BOMB_CHANCE = 0.2f;
         public static Tile[] MapTiles = [];
+        public static bool IsDead = false;
 
         private static void Main(string[] args)
         {
@@ -20,35 +21,55 @@ namespace MinesweeperRaylib
             {
                 if (Raylib.IsMouseButtonPressed(MouseButton.Left))
                 {
-                    Vector2 mousePos = Raylib.GetMousePosition();
-                    for (int i = 0; i < MapTiles.Length; i++)
+                    if (IsDead)
                     {
-                        Rectangle tileRect = new Rectangle(i % MAP_SIZE * TILE_RES, i / MAP_SIZE * TILE_RES, TILE_RES, TILE_RES);
-                        if (!MapTiles[i].IsExposed && Raylib.CheckCollisionPointRec(mousePos, tileRect))
+                        firstClick = true;
+                        RegenerateMap();
+                        IsDead = false;
+                    }
+                    else
+                    {
+                        Vector2 mousePos = Raylib.GetMousePosition();
+                        for (int i = 0; i < MapTiles.Length; i++)
                         {
-                            if (firstClick)
+                            Rectangle tileRect = new Rectangle(i % MAP_SIZE * TILE_RES, i / MAP_SIZE * TILE_RES, TILE_RES, TILE_RES);
+                            if (!MapTiles[i].IsExposed && Raylib.CheckCollisionPointRec(mousePos, tileRect))
                             {
-                                while (MapTiles[i].IsBomb || MapTiles[i].NeighborBombs > 0)
-                                    RegenerateMap();
-                                firstClick = false;
-                            }
-                            MapTiles[i].IsExposed = true;
-                            MapTiles[i].IsFlagged = false;
+                                if (firstClick)
+                                {
+                                    while (MapTiles[i].IsBomb || MapTiles[i].NeighborBombs > 0)
+                                        RegenerateMap();
+                                    firstClick = false;
+                                }
+                                MapTiles[i].IsExposed = true;
+                                MapTiles[i].IsFlagged = false;
 
-                            if (MapTiles[i].NeighborBombs == 0)
-                                Flood(i % MAP_SIZE, i / MAP_SIZE);
+                                if (MapTiles[i].IsBomb)
+                                    IsDead = true;
+                                else if (MapTiles[i].NeighborBombs == 0)
+                                    Flood(i % MAP_SIZE, i / MAP_SIZE);
+                            }
                         }
                     }
                 }
 
                 if (Raylib.IsMouseButtonPressed(MouseButton.Right))
                 {
-                    Vector2 mousePos = Raylib.GetMousePosition();
-                    for (int i = 0; i < MapTiles.Length; i++)
+                    if (IsDead)
                     {
-                        Rectangle tileRect = new Rectangle(i % MAP_SIZE * TILE_RES, i / MAP_SIZE * TILE_RES, TILE_RES, TILE_RES);
-                        if (!MapTiles[i].IsExposed && Raylib.CheckCollisionPointRec(mousePos, tileRect))
-                            MapTiles[i].IsFlagged = true;
+                        firstClick = true;
+                        RegenerateMap();
+                        IsDead = false;
+                    }
+                    else if (!firstClick)
+                    {
+                        Vector2 mousePos = Raylib.GetMousePosition();
+                        for (int i = 0; i < MapTiles.Length; i++)
+                        {
+                            Rectangle tileRect = new Rectangle(i % MAP_SIZE * TILE_RES, i / MAP_SIZE * TILE_RES, TILE_RES, TILE_RES);
+                            if (!MapTiles[i].IsExposed && Raylib.CheckCollisionPointRec(mousePos, tileRect))
+                                MapTiles[i].IsFlagged = !MapTiles[i].IsFlagged;
+                        }
                     }
                 }
 
